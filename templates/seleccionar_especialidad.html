@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <!-- NAVBAR Personalizada para el panel de usuario -->
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'inicio' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife</span>
+            </a>
+            <div class="d-flex align-items-center">
+                {% if user.is_staff %}
+                    <a href="{% url 'paneladmin:admin_dashboard' %}" class="btn btn-danger btn-sm me-2">Admin</a>
+                {% endif %}
+                <a href="{% url 'usuario:panel_inicio' %}" class="btn btn-light me-2"><i class="bi bi-arrow-left me-1"></i> Volver</a>
+                <div class="dropdown ms-2">
+                    <a href="{% url 'usuario:perfil' %}" class="user-profile-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.nombre }}" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="user-avatar">
+                        {% endif %}
+                        <span class="user-name d-none d-md-inline">{{ user.nombre }}</span>
+                        <i class="bi bi-chevron-down dropdown-arrow"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'usuario:perfil' %}">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Seleccionar Especialidad — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="text-center mb-5">
+        <h2>Elige una especialidad</h2>
+        <p class="lead text-muted">Selecciona el área médica en la que necesitas una consulta para continuar.</p>
+    </div>
+
+    <div class="row g-4">
+        {% for especialidad in especialidades %}
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'usuario:seleccionar_horario' especialidad.id %}" class="specialty-card-link">
+                <div class="card specialty-card" style="background-image: url('{{ especialidad.imagen.url }}');">
+                    <div class="card-body">
+                        <h4 class="card-title">{{ especialidad.nombre }}</h4>
+                        <p class="card-text">{{ especialidad.descripcion|truncatewords:15 }}</p>
+                        <span class="btn btn-light btn-sm">Seleccionar</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% empty %}
+        <p class="text-center">No hay especialidades disponibles en este momento.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

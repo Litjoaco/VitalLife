@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel de admin">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'paneladmin:admin_dashboard' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife Admin</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar" aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="adminNavbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'paneladmin:admin_dashboard' %}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'paneladmin:lista_usuarios' %}">Usuarios</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'paneladmin:lista_especialidades' %}">Especialidades</a></li>
+                </ul>
+                <!-- Botón para volver al panel de usuario -->
+                <a href="{% url 'usuario:panel_inicio' %}" class="btn btn-outline-secondary me-3">Volver al Panel</a>
+                <div class="dropdown">
+                    <button class="btn btn-light user-profile-button" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.nombre }}" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="user-avatar">
+                        {% endif %}
+                        <span class="user-name d-none d-md-inline">{{ user.nombre }} (Admin)</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'usuario:panel_inicio' %}">Volver al Panel de Usuario</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}{{ titulo }} — VitalLife{% endblock %}
+
+{% block content %}
+<style>
+    /* Estilos mejorados para los campos de este formulario */
+    .form-control-especialidad {
+        background-color: var(--bg-soft);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        color: var(--text-dark);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .form-control-especialidad:focus {
+        border-color: var(--primary);
+        outline: 0;
+        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15), var(--shadow-sm);
+        background-color: var(--bg-light);
+    }
+
+    .form-control-especialidad::placeholder {
+        color: var(--text-muted);
+        opacity: 0.8;
+    }
+
+    textarea.form-control-especialidad {
+        min-height: 120px;
+        resize: vertical;
+    }
+</style>
+<div class="container my-5">
+    <div class="card shadow-sm" style="max-width: 800px; margin: auto;">
+        <div class="card-header bg-light py-3">
+            <h4 class="mb-0">{{ titulo }}</h4>
+        </div>
+        <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-4">
+                <!-- Columna para los campos de texto -->
+                <div class="col-md-7">
+                    <div class="mb-4">
+                        <label for="{{ form.nombre.id_for_label }}" class="form-label fw-bold">{{ form.nombre.label }}</label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors|striptags }}</div>{% endif %}
+                    </div>
+        
+                    <div class="mb-4">
+                        <label for="{{ form.descripcion.id_for_label }}" class="form-label fw-bold">{{ form.descripcion.label }}</label>
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}<div class="text-danger small mt-1">{{ form.descripcion.errors|striptags }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <!-- Columna para la imagen -->
+                <div class="col-md-5">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.imagen.id_for_label }}" class="form-label fw-bold">{{ form.imagen.label }}</label>
+                        <label for="{{ form.imagen.id_for_label }}" class="image-upload-wrapper text-center">
+                            <img src="{% if form.instance.imagen %}{{ form.instance.imagen.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                                 alt="Vista previa" 
+                                 id="fotoPreview" 
+                                 class="img-fluid rounded mb-2" 
+                                 style="width: 100%; height: 200px; object-fit: cover; border: 3px solid var(--stroke);">
+                            <div id="upload-text">
+                                <i class="bi bi-cloud-arrow-up fs-3"></i>
+                                <p class="mb-0 small">Haz clic para subir una imagen</p>
+                            </div>
+                            {{ form.imagen }}
+                        </label>
+                        {% if form.imagen.errors %}<div class="text-danger small mt-1">{{ form.imagen.errors|striptags }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+ 
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'paneladmin:lista_especialidades' %}" class="btn btn-light">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </div>
+        </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('{{ form.imagen.id_for_label }}').addEventListener('change', function(event) {
+    const [file] = event.target.files;
+    if (file) {
+        const preview = document.getElementById('fotoPreview');
+        preview.src = URL.createObjectURL(file);
+        preview.onload = () => URL.revokeObjectURL(preview.src); // Libera memoria
+    }
+});
+</script>
+{% endblock %}

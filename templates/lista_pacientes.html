@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mis Pacientes — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="dashboard-title mb-0">Mis Pacientes</h1>
+        <a href="{% url 'usuario:medico_dashboard' %}" class="btn btn-light"><i class="bi bi-arrow-left me-1"></i> Volver al Panel</a>
+    </div>
+    <p class="text-muted">Aquí encontrarás una lista de todos los pacientes que han agendado una cita contigo.</p>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if pacientes %}
+                <div class="list-group list-group-flush">
+                    {% for paciente in pacientes %}
+                        <a href="{% url 'usuario:detalle_paciente' paciente.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                {% if paciente.foto_perfil %}
+                                    <img src="{{ paciente.foto_perfil.url }}" alt="Foto de {{ paciente.get_full_name }}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                {% else %}
+                                    <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="rounded-circle me-3" style="width: 50px; height: 50px;">
+                                {% endif %}
+                                <div>
+                                    <h5 class="mb-0">{{ paciente.get_full_name }}</h5>
+                                    <small class="text-muted">{{ paciente.email }}</small>
+                                </div>
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center p-5">
+                    <i class="bi bi-people fs-1 text-muted"></i>
+                    <h4 class="mt-3">Aún no tienes pacientes</h4>
+                    <p class="text-muted">Cuando un paciente agende una cita contigo, aparecerá en esta lista.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

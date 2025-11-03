@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <!-- NAVBAR para la página de inicio -->
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'inicio' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife</span>
+            </a>
+            <nav class="nav-actions" aria-label="Acciones">
+                <a href="{% url 'inicio' %}#caracteristicas" class="btn btn-light-outline">Características</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'usuario:panel_inicio' %}" class="btn btn-light">Mi Panel</a>
+                    <a href="{% url 'logout' %}" class="btn btn-primary">Cerrar Sesión</a>
+                {% else %}
+                    <a href="{% url 'usuario:login' %}" class="btn btn-light">Iniciar sesión</a>
+                    <a href="{% url 'usuario:registro' %}" class="btn btn-primary">Crear Cuenta</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}VitalLife — Tu salud en un solo clic{% endblock %}
+
+{% block content %}
+    <!-- HERO -->
+    <main class="hero d-flex align-items-center">
+        <div class="container text-center hero-content">
+            <div class="kicker">Plataforma de la Clínica Salud Total</div>
+            <h1>Tu salud en un solo clic.</h1>
+            <p class="lead">Agenda consultas, recibe recordatorios automáticos y accede a tus diagnósticos desde cualquier dispositivo. Simple, rápido y seguro.</p>
+        </div>
+    </main>
+    
+    <!-- FEATURES -->
+    <section id="caracteristicas" class="features py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="bi bi-calendar2-check fs-1 text-primary"></i>
+                        </div>
+                        <h3>Gestión de agendas</h3>
+                        <p>Los médicos definen horarios y salas; los pacientes reservan en segundos con disponibilidad en tiempo real.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="bi bi-bell fs-1 text-primary"></i>
+                        </div>
+                        <h3>Notificaciones inteligentes</h3>
+                        <p>Confirmaciones y recordatorios automáticos por correo o SMS para reducir ausencias y confusiones.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="feature-card text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="bi bi-clipboard2-pulse fs-1 text-primary"></i>
+                        </div>
+                        <h3>Registro clínico básico</h3>
+                        <p>Diagnósticos y prescripciones vinculados a cada cita con exportación para reportes administrativos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

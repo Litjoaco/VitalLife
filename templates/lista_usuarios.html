@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel de admin">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'paneladmin:admin_dashboard' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife Admin</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar" aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="adminNavbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'paneladmin:admin_dashboard' %}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'paneladmin:lista_usuarios' %}">Usuarios</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'paneladmin:lista_especialidades' %}">Especialidades</a></li>
+                </ul>
+                <a href="{% url 'usuario:panel_inicio' %}" class="btn btn-outline-secondary me-3">Volver al Panel</a>
+                <div class="dropdown">
+                    <button class="btn btn-light user-profile-button" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.nombre }}" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="user-avatar">
+                        {% endif %}
+                        <span class="user-name d-none d-md-inline">{{ user.nombre }} (Admin)</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'usuario:panel_inicio' %}">Volver al Panel de Usuario</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Gestionar Usuarios — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="dashboard-title mb-0">Gestionar Usuarios</h1>
+    </div>
+
+    <!-- Formulario de Búsqueda y Filtro -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-center">
+                <div class="col-md-6">
+                    <input type="text" name="q" class="form-control" placeholder="Buscar por nombre, apellido o email..." value="{{ request.GET.q }}">
+                </div>
+                <div class="col-md-4">
+                    <select name="role" class="form-select">
+                        <option value="">Todos los roles</option>
+                        {% for role_value, role_name in roles %}
+                        <option value="{{ role_value }}" {% if current_role == role_value %}selected{% endif %}>{{ role_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Usuario</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Rol</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in usuarios %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if u.foto_perfil %}
+                                        <img src="{{ u.foto_perfil.url }}" alt="{{ u.get_full_name }}" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% else %}
+                                        <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% endif %}
+                                    <span class="fw-bold">{{ u.get_full_name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {{ u.email }}
+                                {% if u.role == 'MEDICO' and u.especialidad %}
+                                    <br><small class="text-muted">{{ u.especialidad.nombre }}</small>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge rounded-pill {% if u.role == 'ADMIN' %}text-bg-danger{% elif u.role == 'MEDICO' %}text-bg-info{% else %}text-bg-secondary{% endif %}">{{ u.get_role_display }}</span></td>
+                            <td><span class="badge rounded-pill {% if u.is_active %}text-bg-success{% else %}text-bg-warning{% endif %}">{% if u.is_active %}Activo{% else %}Inactivo{% endif %}</span></td>
+                            <td class="text-end">
+                                <a href="{% url 'paneladmin:editar_usuario' u.pk %}" class="btn btn-sm btn-outline-secondary me-1" title="Editar">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </a>
+                                <a href="{% url 'paneladmin:eliminar_usuario' u.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                    <i class="bi bi-trash-fill"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4">No hay usuarios registrados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load static %}
+{% load usuario_extras %}
+
+{% block header %}
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel de médico">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'usuario:medico_dashboard' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife Médico</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <a href="{% url 'usuario:medico_dashboard' %}" class="btn btn-light me-2"><i class="bi bi-arrow-left me-1"></i> Volver al Panel</a>
+                <div class="dropdown ms-2">
+                    <a href="{% url 'usuario:perfil' %}" class="user-profile-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.nombre }}" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="user-avatar">
+                        {% endif %}
+                        <span class="user-name d-none d-md-inline">Dr. {{ user.get_short_name }}</span>
+                        <i class="bi bi-chevron-down dropdown-arrow"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'usuario:perfil' %}">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Gestionar Mis Horarios — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row g-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="dashboard-title mb-0">Mi Horario Semanal</h1>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{% url 'usuario:gestionar_horarios' %}?fecha={{ previous_week|date:'Y-m-d' }}" class="btn btn-light" title="Semana anterior">&laquo;</a>
+                    <form method="get" id="datePickerForm" class="d-flex align-items-center gap-2">
+                        <input type="date" name="fecha" class="form-control form-control-sm" value="{{ start_of_week|date:'Y-m-d' }}" id="datePickerInput" onchange="this.form.submit()">
+                    </form>
+                    <a href="{% url 'usuario:gestionar_horarios' %}?fecha={{ next_week|date:'Y-m-d' }}" class="btn btn-light" title="Semana siguiente">&raquo;</a>
+                </div>
+            </div>
+            <p class="text-muted">Haz clic en una hora disponible para bloquearla, o en una hora bloqueada para volver a habilitarla. Las horas reservadas por pacientes no se pueden modificar.</p>
+
+            <div class="table-responsive">
+                <table class="table table-bordered text-center schedule-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%;">Hora</th>
+                            {% for dia in horario_semanal %}
+                                <th class="fw-normal">
+                                    <span class="fw-bold">{{ dia.dia|date:"l" }}</span><br>
+                                    <small>{{ dia.dia|date:"d/m" }}</small>
+                                </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hora in horas_laborales %}
+                            <tr>
+                                <td class="fw-bold align-middle">{{ hora|time:"H:i" }}</td>
+                                {% for dia in horario_semanal %} {# Este es el bucle de los días #}
+                                    {% with slot=dia.slots|get_item:forloop.parentloop.counter0 %} {# Accede al slot correcto usando el índice de la hora #}
+                                        <td class="p-0">                                            
+                                            {% if slot.estado == 'reservado' %}
+                                                <a href="{% url 'usuario:detalle_paciente' slot.paciente.id %}" class="schedule-slot slot-reserved" title="Ver detalles de {{ slot.paciente.get_full_name }}">
+                                                    <i class="bi bi-person-check-fill"></i>
+                                                    <span class="slot-text">{{ slot.paciente.get_full_name|truncatechars:15 }}</span>
+                                                    <small class="text-muted">Paciente</small>
+                                                </a>
+                                            {% elif slot.estado == 'bloqueado' %}
+                                                <div class="schedule-slot slot-blocked" data-datetime="{{ slot.fecha_hora|date:'c' }}" data-estado="bloqueado">
+                                                    <i class="bi bi-lock-fill"></i>
+                                                    <span class="slot-text">Bloqueado</span>
+                                                </div>
+                                            {% else %}
+                                                <div class="schedule-slot slot-available" data-datetime="{{ slot.fecha_hora|date:'c' }}" data-estado="disponible">
+                                                    <i class="bi bi-unlock-fill"></i>
+                                                    <span class="slot-text">Disponible</span>
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                    {% endwith %}
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '{{ csrf_token }}';
+    const slots = document.querySelectorAll('.schedule-slot');
+
+    slots.forEach(slot => {
+        slot.addEventListener('click', function() {
+            const estado = this.dataset.estado;
+            const fechaHora = this.dataset.datetime;
+            let url = '';
+
+            // Determinar la acción y la URL
+            if (estado === 'disponible') {
+                url = '{% url "usuario:bloquear_horario" %}';
+            } else if (estado === 'bloqueado') {
+                url = '{% url "usuario:desbloquear_horario" %}';
+            } else {
+                return;
+            }
+
+            this.classList.add('slot-loading'); // Añadir estado de carga visual
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: `fecha_hora=${fechaHora}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    // Actualizar el slot dinámicamente sin recargar la página
+                    this.classList.remove('slot-loading');
+                    const icon = this.querySelector('i');
+                    const text = this.querySelector('.slot-text');
+
+                    if (data.accion === 'bloqueado') {
+                        this.dataset.estado = 'bloqueado';
+                        this.classList.remove('slot-available');
+                        this.classList.add('slot-blocked');
+                        icon.className = 'bi bi-lock-fill';
+                        text.textContent = 'Bloqueado';
+                    } else if (data.accion === 'desbloqueado') {
+                        this.dataset.estado = 'disponible';
+                        this.classList.remove('slot-blocked');
+                        this.classList.add('slot-available');
+                        icon.className = 'bi bi-unlock-fill';
+                        text.textContent = 'Disponible';
+                    }
+                } else {
+                    // Si hay un error, quitar el estado de carga
+                    this.classList.remove('slot-loading');
+                    // Opcional: mostrar una alerta de error con SweetAlert2
+                    Swal.fire('Error', 'No se pudo actualizar el horario. Inténtalo de nuevo.', 'error');
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

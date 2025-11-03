@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <!-- NAVBAR Personalizada para el panel de ADMIN -->
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'paneladmin:admin_dashboard' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife Admin</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar" aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="adminNavbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'paneladmin:admin_dashboard' %}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'paneladmin:lista_usuarios' %}">Usuarios</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'paneladmin:lista_especialidades' %}">Especialidades</a></li>
+                </ul>
+                <!-- Botón para volver al panel de usuario -->
+                <a href="{% url 'usuario:panel_inicio' %}" class="btn btn-outline-secondary me-3">Volver al Panel</a>
+                <!-- Dropdown de Perfil de Usuario -->
+                <div class="dropdown">
+                    <button class="btn btn-light user-profile-button" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.nombre }}" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="user-avatar">
+                        {% endif %}
+                        <span class="user-name d-none d-md-inline">{{ user.nombre }} (Admin)</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'usuario:panel_inicio' %}">Volver al Panel de Usuario</a></li>
+                        <li><a class="dropdown-item" href="{% url 'admin:index' %}">Admin Django</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Panel de Administración — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="mb-5 d-flex flex-column align-items-center">
+        <h1 class="dashboard-title">Panel de Administración</h1>
+        <p class="lead text-muted">Gestiona los recursos y configuraciones del sistema.</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Tarjeta para Gestionar Usuarios -->
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'paneladmin:lista_usuarios' %}" class="admin-card-link">
+                <div class="admin-card h-100">
+                    <div class="admin-card-icon text-primary">
+                        <i class="bi bi-people-fill fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold">Gestionar Usuarios</h4>
+                    <p class="text-muted small">Administra pacientes, médicos y administradores.</p>
+                    <span class="badge bg-primary-soft text-primary-dark rounded-pill">{{ total_usuarios }} Usuarios</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Tarjeta para Gestionar Especialidades -->
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'paneladmin:lista_especialidades' %}" class="admin-card-link">
+                <div class="admin-card h-100">
+                    <div class="admin-card-icon text-success">
+                        <i class="bi bi-heart-pulse-fill fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold">Gestionar Especialidades</h4>
+                    <p class="text-muted small">Crea, edita y elimina las especialidades médicas.</p>
+                    <span class="badge bg-success-soft text-success-dark rounded-pill">{{ total_especialidades }} Especialidades</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Tarjeta para Gestionar Horarios -->
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'paneladmin:admin_gestionar_horarios' %}" class="admin-card-link">
+                <div class="admin-card h-100">
+                    <div class="admin-card-icon text-warning">
+                        <i class="bi bi-calendar-week-fill fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold">Gestionar Horarios</h4>
+                    <p class="text-muted small">Configura la disponibilidad y horarios de los médicos.</p>
+                    <span class="badge bg-warning-soft text-warning-dark rounded-pill">Control Total</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Tarjeta para Gestionar Citas -->
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'paneladmin:lista_citas' %}" class="admin-card-link">
+                <div class="admin-card h-100">
+                    <div class="admin-card-icon text-info">
+                        <i class="bi bi-calendar2-check-fill fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold">Gestionar Citas</h4>
+                    <p class="text-muted small">Visualiza, filtra y cancela todas las citas del sistema.</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

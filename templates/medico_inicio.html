@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel de médico">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'usuario:medico_inicio' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife Médico</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <div class="dropdown ms-2">
+                    <a href="#" class="user-profile-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.nombre }}" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="user-avatar">
+                        {% endif %}
+                        <span class="user-name d-none d-md-inline">Dr. {{ user.get_short_name }}</span>
+                        <i class="bi bi-chevron-down dropdown-arrow"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'usuario:perfil' %}">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Bienvenido, Dr. {{ user.apellido }} — VitalLife{% endblock %}
+
+{% block content %}
+<style>
+    .welcome-card {
+        position: relative;
+        border-radius: var(--radius-lg);
+        color: white;
+        text-align: center;
+        background: url("{% static 'img/fondom1.jpg' %}") no-repeat center center;
+        background-size: cover;
+        min-height: 65vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+    }
+    .welcome-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5); /* Capa oscura para legibilidad */
+    }
+    .welcome-card .card-body {
+        position: relative; /* Para que el contenido esté sobre la capa oscura */
+    }
+    .feature-card {
+        border: 1px solid var(--stroke);
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-md) !important;
+    }
+    .feature-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 4rem;
+        height: 4rem;
+        color: var(--primary-text-emphasis);
+        background-color: var(--primary-bg-subtle);
+        border-radius: 50%;
+    }
+</style>
+
+<div class="container my-5">
+    <div class="card shadow-lg welcome-card">
+        <div class="card-body">
+            <h1 class="display-4 fw-bold">Bienvenido, Dr. {{ user.apellido }}</h1>
+            <p class="lead mt-3">Hoy tienes {{ citas_hoy_count }} citas programadas. Tu panel de control está listo.</p>
+            <a href="{% url 'usuario:medico_dashboard' %}" class="btn btn-primary btn-lg mt-4">
+                <i class="bi bi-grid-1x2-fill me-2"></i>Ingresar a mi Panel
+            </a>
+        </div>
+    </div>
+
+    <!-- Tarjetas Informativas de Texto -->
+    <div class="row g-4 mt-5">
+        <div class="col-lg-4">
+            <div class="card h-100 shadow-sm feature-card p-4">
+                <div class="feature-icon mb-3"><i class="bi bi-calendar-check-fill fs-2"></i></div>
+                <h4 class="fw-bold">Gestiona tu Agenda</h4>
+                <p class="text-muted">Visualiza tu calendario, bloquea horas y prepárate para tus próximas citas con un solo clic.</p>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100 shadow-sm feature-card p-4">
+                <div class="feature-icon mb-3"><i class="bi bi-file-earmark-medical-fill fs-2"></i></div>
+                <h4 class="fw-bold">Historial de Pacientes</h4>
+                <p class="text-muted">Accede al historial clínico, añade diagnósticos y sube recetas para cada uno de tus pacientes.</p>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100 shadow-sm feature-card p-4">
+                <div class="feature-icon mb-3"><i class="bi bi-person-badge-fill fs-2"></i></div>
+                <h4 class="fw-bold">Tu Perfil Profesional</h4>
+                <p class="text-muted">Mantén tu información de contacto actualizada para que los pacientes puedan conocerte mejor.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

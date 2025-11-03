@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <!-- NAVBAR Personalizada para el panel de usuario -->
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'usuario:panel_inicio' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <a href="{% url 'usuario:perfil' %}#citas" class="btn btn-light me-2"><i class="bi bi-arrow-left me-1"></i> Volver al Historial</a>
+                <div class="dropdown ms-2">
+                    <a href="{% url 'usuario:perfil' %}" class="user-profile-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.nombre }}" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="user-avatar">
+                        {% endif %}
+                        <span class="user-name d-none d-md-inline">{{ user.nombre }}</span>
+                        <i class="bi bi-chevron-down dropdown-arrow"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'usuario:perfil' %}">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Detalle de Cita — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-lg">
+        <div class="card-header text-white p-4" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark));">
+            <h2 class="mb-0">Detalle de la Cita</h2>
+            <p class="mb-0 opacity-75">Cita de {{ cita.especialidad.nombre }} del {{ cita.fecha_hora|date:"l, d \d\e F \d\e Y" }}</p>
+        </div>
+        <div class="card-body p-lg-5 p-4 bg-light">
+            <div class="row g-4">
+                <!-- Columna de Información General -->
+                <div class="col-lg-5">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3"><i class="bi bi-info-circle-fill me-2 text-primary"></i>Información General</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item px-0"><strong>Médico:</strong><br>Dr. {{ cita.medico.get_full_name }}</li>
+                                <li class="list-group-item px-0"><strong>Fecha y Hora:</strong><br>{{ cita.fecha_hora|date:"d/m/Y" }} a las {{ cita.fecha_hora|time:"H:i" }} hrs.</li>
+                                <li class="list-group-item px-0"><strong>Motivo de la consulta:</strong><br>{{ cita.motivo|default:"No especificado." }}</li>
+                            </ul>
+                            {% if cita.estado == 'RESERVADA' and cita.fecha_hora > now %}
+                            <div class="d-grid mt-3">
+                                <a href="{% url 'usuario:cancelar_cita' cita.id %}" class="btn btn-outline-danger"><i class="bi bi-x-circle me-2"></i>Cancelar Cita</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna de Diagnóstico y Recetas -->
+                <div class="col-lg-7">
+                    <!-- Diagnóstico -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3"><i class="bi bi-file-earmark-medical-fill me-2 text-primary"></i>Diagnóstico del Médico</h5>
+                            {% if cita.diagnostico %}
+                                <h6 class="fw-bold">{{ cita.diagnostico.titulo }}</h6>
+                                <p class="card-text">{{ cita.diagnostico.descripcion|linebreaksbr }}</p>
+                                <small class="text-muted">Registrado el {{ cita.diagnostico.fecha_creacion|date:"d/m/Y" }}</small>
+                            {% else %}
+                                <p class="text-muted small mb-0">El médico aún no ha registrado un diagnóstico para esta consulta.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Recetas -->
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3"><i class="bi bi-file-earmark-text-fill me-2 text-primary"></i>Recetas y Documentos</h5>
+                            {% if cita.recetas.all %}
+                                <ul class="list-group list-group-flush">
+                                {% for receta in cita.recetas.all %}
+                                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <p class="mb-0 fw-bold">{{ receta.titulo }}</p>
+                                            <p class="small text-muted mb-0">{{ receta.indicaciones|default:"Sin indicaciones adicionales." }}</p>
+                                        </div>
+                                        <a href="{{ receta.archivo.url }}" class="btn btn-sm btn-outline-primary flex-shrink-0" target="_blank">
+                                            <i class="bi bi-download me-1"></i> Descargar
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted small mb-0">No hay recetas o documentos adjuntos para esta consulta.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

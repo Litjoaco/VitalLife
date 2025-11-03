@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel de admin">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'paneladmin:admin_dashboard' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife Admin</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar" aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="adminNavbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'paneladmin:admin_dashboard' %}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'paneladmin:lista_usuarios' %}">Usuarios</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'paneladmin:lista_especialidades' %}">Especialidades</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'paneladmin:lista_citas' %}">Citas</a></li>
+                </ul>
+                <a href="{% url 'usuario:panel_inicio' %}" class="btn btn-outline-secondary me-3">Volver al Panel</a>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Gestionar Citas — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="dashboard-title mb-0">Gestionar Citas</h1>
+    </div>
+
+    <!-- Formulario de Búsqueda y Filtro -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-center">
+                <div class="col-md-6">
+                    <input type="text" name="q" class="form-control" placeholder="Buscar por nombre de paciente o médico..." value="{{ request.GET.q }}">
+                </div>
+                <div class="col-md-4">
+                    <select name="estado" class="form-select">
+                        <option value="">Todos los estados</option>
+                        {% for estado_value, estado_name in estados %}
+                        <option value="{{ estado_value }}" {% if current_estado == estado_value %}selected{% endif %}>{{ estado_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Paciente</th>
+                            <th scope="col">Médico</th>
+                            <th scope="col">Fecha y Hora</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cita in citas %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if cita.paciente.foto_perfil %}
+                                        <img src="{{ cita.paciente.foto_perfil.url }}" alt="{{ cita.paciente.get_full_name }}" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% else %}
+                                        <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% endif %}
+                                    <span class="fw-bold">{{ cita.paciente.get_full_name }}</span>
+                                </div>
+                            </td>
+                            <td>Dr. {{ cita.medico.get_full_name }}<br><small class="text-muted">{{ cita.especialidad.nombre }}</small></td>
+                            <td>{{ cita.fecha_hora|date:"d/m/Y H:i" }}</td>
+                            <td><span class="badge rounded-pill {% if cita.estado == 'RESERVADA' %}text-bg-primary{% elif cita.estado == 'COMPLETADA' %}text-bg-success{% elif cita.estado == 'CANCELADA' %}text-bg-danger{% endif %}">{{ cita.get_estado_display }}</span></td>
+                            <td class="text-end">
+                                {% if cita.estado == 'RESERVADA' %}
+                                <a href="{% url 'paneladmin:admin_cancelar_cita' cita.id %}" class="btn btn-sm btn-outline-danger" title="Cancelar Cita">
+                                    <i class="bi bi-x-circle-fill"></i> Cancelar
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4">No se encontraron citas con los filtros aplicados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

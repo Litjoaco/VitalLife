@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel de médico">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'usuario:medico_dashboard' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife Médico</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <div class="dropdown ms-2">
+                    <a href="#" class="user-profile-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.nombre }}" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="user-avatar">
+                        {% endif %}
+                        <span class="user-name d-none d-md-inline">Dr. {{ user.get_short_name }}</span>
+                        <i class="bi bi-chevron-down dropdown-arrow"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'usuario:perfil' %}">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Panel de Médico — VitalLife{% endblock %}
+
+{% block content %}
+<style>
+    .stat-card {
+        border-left: 4px solid var(--primary);
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg) !important;
+    }
+    .stat-card.border-success { border-left-color: var(--success); }
+    .stat-card.border-info { border-left-color: var(--info); }
+
+    .action-card {
+        background-color: var(--bg-soft);
+        border: 1px solid var(--stroke);
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-md) !important;
+        border-color: var(--primary);
+    }
+    .action-card .action-icon {
+        font-size: 2.5rem;
+        color: var(--primary);
+    }
+</style>
+<div class="container my-5">
+    <!-- Widgets de Resumen -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalCitasHoy">
+                <div class="card shadow-sm h-100 stat-card">
+                    <div class="card-body d-flex align-items-center p-4">
+                        <i class="bi bi-calendar-day fs-1 text-primary me-4"></i>
+                        <div>
+                            <h4 class="mb-0">{{ citas_hoy_count }}</h4>
+                            <p class="text-muted mb-0">Citas para hoy</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'usuario:lista_pacientes' %}" class="text-decoration-none">
+                <div class="card shadow-sm h-100 stat-card border-success">
+                    <div class="card-body d-flex align-items-center p-4">
+                        <i class="bi bi-people-fill fs-1 text-success me-4"></i>
+                        <div>
+                            <h4 class="mb-0">{{ total_pacientes }}</h4>
+                            <p class="text-muted mb-0">Pacientes totales</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalCitasSemana">
+                <div class="card shadow-sm h-100 stat-card border-info">
+                    <div class="card-body d-flex align-items-center p-4">
+                        <i class="bi bi-calendar-week fs-1 text-info me-4"></i>
+                        <div>
+                            <h4 class="mb-0">{{ citas_semana_count }}</h4>
+                            <p class="text-muted mb-0">Citas esta semana</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Próxima Cita -->
+    <div class="card shadow-lg mb-5">
+        <div class="card-header bg-light p-3">
+            <h5 class="mb-0"><i class="bi bi-stopwatch me-2"></i>Próxima Cita</h5>
+        </div>
+        <div class="card-body p-4">
+            {% if proxima_cita %}
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <h4 class="mb-1">Paciente: {{ proxima_cita.paciente.get_full_name }}</h4>
+                        <p class="lead text-primary fw-bold mb-2">Hora: {{ proxima_cita.fecha_hora|time:"H:i" }} hrs.</p>
+                        <p class="text-muted mb-0"><strong>Motivo:</strong> {{ proxima_cita.motivo|default:"No especificado."|truncatewords:15 }}</p>
+                    </div>
+                    <a href="{% url 'usuario:detalle_paciente' proxima_cita.paciente.id %}" class="btn btn-primary mt-3 mt-md-0">
+                        <i class="bi bi-person-lines-fill me-2"></i>Gestionar Paciente
+                    </a>
+                </div>
+            {% else %}
+                <div class="text-center py-3">
+                    <i class="bi bi-calendar2-check fs-1 text-muted"></i>
+                    <h5 class="mt-3">No tienes más citas programadas</h5>
+                    <p class="text-muted mb-0">¡Disfruta de tu tiempo libre!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <h3 class="mb-4">Acciones Rápidas</h3>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <a href="{% url 'usuario:gestionar_horarios' %}" class="text-decoration-none text-dark">
+                <div class="card action-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="action-icon mb-3"><i class="bi bi-calendar-plus-fill"></i></div>
+                        <h5 class="card-title">Gestionar Mi Horario</h5>
+                        <p class="card-text small text-muted">Bloquea y habilita tus horas disponibles para agendamiento.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a href="{% url 'usuario:lista_pacientes' %}" class="text-decoration-none text-dark">
+                <div class="card action-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="action-icon mb-3"><i class="bi bi-person-lines-fill"></i></div>
+                        <h5 class="card-title">Ver Mis Pacientes</h5>
+                        <p class="card-text small text-muted">Accede al historial y gestiona la información de tus pacientes.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Citas de Hoy -->
+<div class="modal fade" id="modalCitasHoy" tabindex="-1" aria-labelledby="modalCitasHoyLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCitasHoyLabel"><i class="bi bi-calendar-day me-2"></i>Citas Programadas para Hoy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if citas_hoy %}
+                    <ul class="list-group list-group-flush">
+                        {% for cita in citas_hoy %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3 text-center" style="width: 70px;">
+                                        <div class="fw-bold fs-5">{{ cita.fecha_hora|time:"H:i" }}</div>
+                                        <small class="text-muted">{{ cita.fecha_hora|time:"A" }}</small>
+                                    </div>
+                                    <div class="border-start ps-3">
+                                        <h6 class="mb-0">{{ cita.paciente.get_full_name }}</h6>
+                                        <small class="text-muted">{{ cita.motivo|default:"Sin motivo especificado."|truncatechars:50 }}</small>
+                                    </div>
+                                </div>
+                                <a href="{% url 'usuario:detalle_paciente' cita.paciente.id %}" class="btn btn-sm btn-outline-primary">Gestionar</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="text-center p-4">
+                        <i class="bi bi-calendar-x fs-1 text-muted"></i>
+                        <h5 class="mt-3">No hay citas para hoy.</h5>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Citas de la Semana -->
+<div class="modal fade" id="modalCitasSemana" tabindex="-1" aria-labelledby="modalCitasSemanaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCitasSemanaLabel"><i class="bi bi-calendar-week me-2"></i>Citas de esta Semana</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if citas_semana %}
+                    <ul class="list-group list-group-flush">
+                        {% for cita in citas_semana %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3 text-center" style="width: 90px;">
+                                        <div class="fw-bold">{{ cita.fecha_hora|date:"D, d M" }}</div>
+                                        <small class="text-muted">{{ cita.fecha_hora|time:"H:i" }} hrs</small>
+                                    </div>
+                                    <div class="border-start ps-3">
+                                        <h6 class="mb-0">{{ cita.paciente.get_full_name }}</h6>
+                                        <small class="text-muted">{{ cita.motivo|default:"Sin motivo especificado."|truncatechars:50 }}</small>
+                                    </div>
+                                </div>
+                                <a href="{% url 'usuario:detalle_paciente' cita.paciente.id %}" class="btn btn-sm btn-outline-primary">Gestionar</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="text-center p-4">
+                        <i class="bi bi-calendar-x fs-1 text-muted"></i>
+                        <h5 class="mt-3">No hay citas para esta semana.</h5>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

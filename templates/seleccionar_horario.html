@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <!-- NAVBAR Personalizada para el panel de usuario -->
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'usuario:panel_inicio' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife</span>
+            </a>
+            <div class="d-flex align-items-center">
+                {% if user.is_staff %}
+                    <a href="{% url 'paneladmin:admin_dashboard' %}" class="btn btn-danger btn-sm me-2">Admin</a>
+                {% endif %}
+                <a href="{% url 'usuario:seleccionar_especialidad' %}" class="btn btn-light me-2"><i class="bi bi-arrow-left me-1"></i> Volver</a>
+                <div class="dropdown ms-2">
+                    <a href="{% url 'usuario:perfil' %}" class="user-profile-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.nombre }}" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="user-avatar">
+                        {% endif %}
+                        <span class="user-name d-none d-md-inline">{{ user.nombre }}</span>
+                        <i class="bi bi-chevron-down dropdown-arrow"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'usuario:perfil' %}">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Seleccionar Horario para {{ especialidad.nombre }} — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="text-center mb-5">
+        <h2>Selecciona un Horario en {{ especialidad.nombre }}</h2>
+        <p class="lead text-muted">Filtra por médico y fecha para encontrar la hora que más te acomode.</p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" id="filterForm">
+                <div class="row g-3">
+                    <!-- Filtro de Médicos -->
+                    <div class="col-lg-8">
+                        <label class="form-label fw-bold">Filtrar por Médico</label>
+                        <div class="doctor-filter-list">
+                            <label class="doctor-filter-item">
+                                <input type="radio" name="medico" value="todos" class="d-none" {% if not medico_seleccionado_id or medico_seleccionado_id == 'todos' %}checked{% endif %}>
+                                <div class="doctor-filter-content">
+                                    <div class="doctor-avatar-all"><i class="bi bi-people-fill"></i></div>
+                                    <span class="doctor-name">Todos</span>
+                                </div>
+                            </label>
+                            {% for medico in medicos %}
+                            <label class="doctor-filter-item">
+                                <input type="radio" name="medico" value="{{ medico.id }}" class="d-none" {% if medico_seleccionado_id|add:"0" == medico.id %}checked{% endif %}>
+                                <div class="doctor-filter-content">
+                                    {% if medico.foto_perfil %}
+                                        <img src="{{ medico.foto_perfil.url }}" alt="{{ medico.get_full_name }}" class="doctor-avatar">
+                                    {% else %}
+                                        <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="doctor-avatar">
+                                    {% endif %}
+                                    <span class="doctor-name">{{ medico.get_short_name }}</span>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <!-- Filtro de Fecha -->
+                    <div class="col-lg-4">
+                        <label for="fecha" class="form-label fw-bold">Seleccionar Fecha</label>
+                        <input type="date" name="fecha" id="fecha" class="form-control" value="{{ fecha_seleccionada|date:'Y-m-d' }}">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Listado de Horarios -->
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">Horarios disponibles para el {{ fecha_seleccionada|date:"l, d \d\e F" }}</h5>
+        </div>
+        <div class="card-body">
+            {% if horarios %}
+                <div class="row g-3">
+                    {% for horario in horarios %}
+                    <div class="col-md-4 col-lg-3">
+                        <button type="button" class="btn btn-outline-primary w-100 p-3 text-start schedule-btn"
+                                data-medico-id="{{ horario.medico.id }}"
+                                data-medico-nombre="{{ horario.medico.get_full_name }}"
+                                data-especialidad-id="{{ especialidad.id }}"
+                                data-fecha-hora="{{ horario.fecha_hora|date:'c' }}"
+                                data-fecha-hora-larga="{{ horario.fecha_hora|date:'l, d \d\e F \a \l\a\s H:i' }} hrs.">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold fs-5">{{ horario.fecha_hora|time:"H:i" }}</span>
+                                <i class="bi bi-arrow-right-circle"></i>
+                            </div>
+                            <small class="text-muted">Dr. {{ horario.medico.get_full_name }}</small>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-calendar-x fs-1 text-muted"></i>
+                    <h4 class="mt-3">No hay horarios disponibles</h4>
+                    <p class="text-muted">Intenta con otro médico u otra fecha.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Lógica para el filtro ---
+    const form = document.getElementById('filterForm');
+    const inputs = form.querySelectorAll('input[name="medico"], input[name="fecha"]');
+    inputs.forEach(input => {
+        input.addEventListener('change', function() {
+            form.submit();
+        });
+    });
+
+    // --- Lógica para agendar cita ---
+    const scheduleButtons = document.querySelectorAll('.schedule-btn');
+    const csrfToken = '{{ csrf_token }}';
+
+    scheduleButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const medicoId = this.dataset.medicoId;
+            const medicoNombre = this.dataset.medicoNombre;
+            const especialidadId = this.dataset.especialidadId;
+            const fechaHora = this.dataset.fechaHora;
+            const fechaHoraLarga = this.dataset.fechaHoraLarga;
+
+            Swal.fire({
+                title: 'Confirmar Cita',
+                html: `
+                    <p>Estás a punto de agendar una cita para:</p>
+                    <ul class="list-unstyled text-start">
+                        <li><strong>Especialidad:</strong> {{ especialidad.nombre }}</li>
+                        <li><strong>Médico:</strong> Dr. ${medicoNombre}</li>
+                        <li><strong>Fecha:</strong> ${fechaHoraLarga}</li>
+                    </ul>
+                    <textarea id="motivo-consulta" class="form-control mt-3" placeholder="Motivo de la consulta (opcional)..." rows="3"></textarea>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, agendar',
+                cancelButtonText: 'Cancelar',
+                customClass: { confirmButton: 'btn btn-primary', cancelButton: 'btn btn-light' },
+                buttonsStyling: false,
+                preConfirm: () => {
+                    const motivo = document.getElementById('motivo-consulta').value;
+                    return fetch("{% url 'usuario:agendar_cita' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: new URLSearchParams({
+                            'medico_id': medicoId,
+                            'especialidad_id': especialidadId,
+                            'fecha_hora': fechaHora,
+                            'motivo': motivo
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) { throw new Error(response.statusText) }
+                        return response.json();
+                    })
+                    .catch(error => { Swal.showValidationMessage(`La solicitud falló: ${error}`) });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Deshabilitar el botón y cambiar su apariencia al instante
+                    button.disabled = true;
+                    button.classList.remove('btn-outline-primary');
+                    button.classList.add('btn-success');
+                    button.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold fs-5">¡Agendado!</span>
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <small class="text-white">Tu cita está confirmada</small>
+                    `;
+
+                    Swal.fire({
+                        title: '¡Cita Agendada!',
+                        text: result.value.message,
+                        icon: 'success',
+                        confirmButtonText: 'Entendido'
+                    }).then(() => {
+                        window.location.href = "{% url 'usuario:panel_inicio' %}";
+                    });
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

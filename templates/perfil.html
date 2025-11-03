@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <!-- NAVBAR Personalizada para el panel de usuario -->
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'usuario:panel_inicio' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <a href="{% url 'usuario:panel_inicio' %}" class="btn btn-light me-2"><i class="bi bi-arrow-left me-1"></i> Volver al Inicio</a>
+                <div class="dropdown ms-2">
+                    <a href="#" class="user-profile-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.nombre }}" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="user-avatar">
+                        {% endif %}
+                        <span class="user-name d-none d-md-inline">{{ user.nombre }}</span>
+                        <i class="bi bi-chevron-down dropdown-arrow"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item active" href="{% url 'usuario:perfil' %}">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Mi Perfil — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Encabezado del Perfil -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            {% if user.foto_perfil %}
+                <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.get_full_name }}" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover;">
+            {% else %}
+                <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="rounded-circle me-3" style="width: 80px; height: 80px;">
+            {% endif %}
+            <div>
+                <h1 class="dashboard-title mb-0">{{ user.get_full_name }}</h1>
+                <p class="text-muted mb-0">{{ user.email }}</p>
+            </div>
+        </div>
+        <a href="{% url 'usuario:editar_perfil' %}" class="btn btn-primary"><i class="bi bi-pencil-square me-1"></i> Editar Perfil</a>
+    </div>
+
+    <!-- Ficha Médica (Solo Lectura) -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-clipboard2-pulse-fill me-2"></i>Mi Ficha Médica</h5>
+        </div>
+        <div class="card-body">
+            {% if ficha_medica %}
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <strong>Altura:</strong>
+                        <p>{{ ficha_medica.altura_cm|default:"No especificada" }} cm</p>
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Peso:</strong>
+                        <p>{{ ficha_medica.peso_kg|default:"No especificado" }} kg</p>
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Tipo de Sangre:</strong>
+                        <p>{{ ficha_medica.get_tipo_sangre_display|default:"No especificado" }}</p>
+                    </div>
+                    <div class="col-12">
+                        <strong>Alergias Conocidas:</strong>
+                        <p class="text-muted">{{ ficha_medica.alergias|default:"No se han registrado alergias."|linebreaksbr }}</p>
+                    </div>
+                    <div class="col-12">
+                        <strong>Enfermedades Crónicas:</strong>
+                        <p class="text-muted">{{ ficha_medica.enfermedades_cronicas|default:"No se han registrado enfermedades crónicas."|linebreaksbr }}</p>
+                    </div>
+                </div>
+                <small class="d-block text-end text-muted mt-3">Última actualización: {{ ficha_medica.ultima_actualizacion|date:"d/m/Y H:i" }}</small>
+            {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted mb-0">Tu ficha médica aún no ha sido creada por un profesional.</p>
+                    <small>Esta información será completada por tu médico en una consulta.</small>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Historial de Citas -->
+    <h3 class="mt-5 mb-3">Mi Historial de Citas</h3>
+    {% if citas %}
+        <div class="list-group">
+            {% for cita in citas %}
+                <a href="{% url 'usuario:detalle_cita' cita.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">Cita de {{ cita.especialidad.nombre }}</h5>
+                        <p class="mb-1">Con Dr. {{ cita.medico.get_full_name }} el <strong>{{ cita.fecha_hora|date:"d \d\e F \d\e Y" }}</strong> a las {{ cita.fecha_hora|time:"H:i" }} hrs.</p>
+                    </div>
+                    <span class="badge rounded-pill {% if cita.estado == 'RESERVADA' %}text-bg-primary{% elif cita.estado == 'COMPLETADA' %}text-bg-success{% elif cita.estado == 'CANCELADA' %}text-bg-danger{% endif %}">{{ cita.get_estado_display }}</span>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center p-5 border rounded">
+            <i class="bi bi-calendar-x fs-1 text-muted"></i>
+            <h4 class="mt-3">Aún no tienes citas</h4>
+            <p class="text-muted">Cuando agendes tu primera cita, aparecerá aquí.</p>
+            <a href="{% url 'usuario:seleccionar_especialidad' %}" class="btn btn-primary mt-2">Agendar una Cita</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+{% load usuario_extras %}
+
+{% block title %}Gestionar Horario de Dr. {{ doctor.apellido }} — Admin{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="dashboard-title mb-0">Horario de Dr. {{ doctor.get_full_name }}</h1>
+            <p class="text-muted mb-0">Especialidad: {{ doctor.especialidad.nombre }}</p>
+        </div>
+        <a href="{% url 'paneladmin:admin_gestionar_horarios' %}" class="btn btn-light"><i class="bi bi-arrow-left me-1"></i> Cambiar de Médico</a>
+    </div>
+
+    <div class="d-flex justify-content-center align-items-center gap-2 mb-4">
+        <a href="{% url 'paneladmin:admin_gestionar_horarios_medico' doctor.id %}?fecha={{ previous_week|date:'Y-m-d' }}" class="btn btn-light" title="Semana anterior">&laquo;</a>
+        <form method="get" id="datePickerForm" class="d-flex align-items-center gap-2">
+            <input type="date" name="fecha" class="form-control form-control-sm" value="{{ start_of_week|date:'Y-m-d' }}" id="datePickerInput" onchange="this.form.submit()">
+        </form>
+        <a href="{% url 'paneladmin:admin_gestionar_horarios_medico' doctor.id %}?fecha={{ next_week|date:'Y-m-d' }}" class="btn btn-light" title="Semana siguiente">&raquo;</a>
+    </div>
+    <p class="text-muted text-center">Haz clic en una hora disponible para bloquearla, o en una hora bloqueada para volver a habilitarla. Las horas reservadas no se pueden modificar.</p>
+
+    <div class="table-responsive">
+        <table class="table table-bordered text-center schedule-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">Hora</th>
+                    {% for dia in horario_semanal %}
+                        <th class="fw-normal">
+                            <span class="fw-bold">{{ dia.dia|date:"l" }}</span><br>
+                            <small>{{ dia.dia|date:"d/m" }}</small>
+                        </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for hora in horas_laborales %}
+                    <tr>
+                        <td class="fw-bold align-middle">{{ hora|time:"H:i" }}</td>
+                        {% for dia in horario_semanal %}
+                            {% with slot=dia.slots|get_item:forloop.parentloop.counter0 %}
+                                <td class="p-0">
+                                    {% if slot.estado == 'reservado' %}
+                                        <div class="schedule-slot slot-reserved" title="Cita con {{ slot.paciente.get_full_name }}">
+                                            <i class="bi bi-person-check-fill"></i>
+                                            <span class="slot-text">{{ slot.paciente.get_full_name|truncatechars:15 }}</span>
+                                            <small class="text-muted">Paciente</small>
+                                        </div>
+                                    {% elif slot.estado == 'bloqueado' %}
+                                        <div class="schedule-slot slot-blocked" data-datetime="{{ slot.fecha_hora|date:'c' }}" data-estado="bloqueado">
+                                            <i class="bi bi-lock-fill"></i>
+                                            <span class="slot-text">Bloqueado</span>
+                                        </div>
+                                    {% else %}
+                                        <div class="schedule-slot slot-available" data-datetime="{{ slot.fecha_hora|date:'c' }}" data-estado="disponible">
+                                            <i class="bi bi-unlock-fill"></i>
+                                            <span class="slot-text">Disponible</span>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            {% endwith %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = '{{ csrf_token }}';
+    const doctorId = '{{ doctor.id }}';
+    const slots = document.querySelectorAll('.schedule-slot');
+
+    slots.forEach(slot => {
+        slot.addEventListener('click', function() {
+            const estado = this.dataset.estado;
+            if (estado === 'reservado') return;
+
+            const fechaHora = this.dataset.datetime;
+            let url = '';
+
+            if (estado === 'disponible') {
+                url = '{% url "paneladmin:admin_bloquear_horario" %}';
+            } else if (estado === 'bloqueado') {
+                url = '{% url "paneladmin:admin_desbloquear_horario" %}';
+            }
+
+            this.classList.add('slot-loading');
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: new URLSearchParams({
+                    'fecha_hora': fechaHora,
+                    'doctor_id': doctorId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                this.classList.remove('slot-loading');
+                if (data.status === 'ok') {
+                    const icon = this.querySelector('i');
+                    const text = this.querySelector('.slot-text');
+
+                    if (data.accion === 'bloqueado') {
+                        this.dataset.estado = 'bloqueado';
+                        this.classList.remove('slot-available');
+                        this.classList.add('slot-blocked');
+                        icon.className = 'bi bi-lock-fill';
+                        text.textContent = 'Bloqueado';
+                    } else if (data.accion === 'desbloqueado') {
+                        this.dataset.estado = 'disponible';
+                        this.classList.remove('slot-blocked');
+                        this.classList.add('slot-available');
+                        icon.className = 'bi bi-unlock-fill';
+                        text.textContent = 'Disponible';
+                    }
+                } else {
+                    Swal.fire('Error', 'No se pudo actualizar el horario.', 'error');
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

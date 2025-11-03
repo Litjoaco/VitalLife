@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Detalle de {{ paciente.get_full_name }} — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Encabezado del Paciente -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            {% if paciente.foto_perfil %}
+                <img src="{{ paciente.foto_perfil.url }}" alt="Foto de {{ paciente.get_full_name }}" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover;">
+            {% else %}
+                <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="rounded-circle me-3" style="width: 80px; height: 80px;">
+            {% endif %}
+            <div>
+                <h1 class="dashboard-title mb-0">{{ paciente.get_full_name }}</h1>
+                <p class="text-muted mb-0">{{ paciente.email }} | {{ paciente.telefono }}</p>
+            </div>
+        </div>
+        <a href="{% url 'usuario:lista_pacientes' %}" class="btn btn-light"><i class="bi bi-arrow-left me-1"></i> Volver a la lista</a>
+    </div>
+
+    <!-- Ficha Médica del Paciente -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-clipboard2-pulse-fill me-2"></i>Ficha Médica</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row g-3">
+                    {% for field in ficha_form %}
+                    <div class="col-md-6">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="submit" name="submit_ficha" class="btn btn-primary mt-3"><i class="bi bi-save me-1"></i> Guardar Ficha Médica</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Historial de Citas -->
+    <h3 class="mt-5 mb-3">Historial de Citas</h3>
+    
+    {% if citas %}
+        <div class="accordion" id="accordionCitas">
+            {% for cita in citas %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ cita.id }}">
+                    <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ cita.id }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ cita.id }}">
+                        Cita del {{ cita.fecha_hora|date:"d/m/Y" }} a las {{ cita.fecha_hora|time:"H:i" }}
+                    </button>
+                </h2>
+                <div id="collapse{{ cita.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ cita.id }}" data-bs-parent="#accordionCitas">
+                    <div class="accordion-body">
+                        <p><strong>Motivo de la consulta:</strong> {{ cita.motivo|default:"No especificado" }}</p>
+                        <hr>
+                        
+                        <!-- Sección de Diagnóstico -->
+                        <h5><i class="bi bi-file-earmark-medical me-2"></i>Diagnóstico</h5>
+                        {% if cita.diagnostico %}
+                            <div class="card bg-light mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ cita.diagnostico.titulo }}</h6>
+                                    <p class="card-text">{{ cita.diagnostico.descripcion|linebreaksbr }}</p>
+                                    <small class="text-muted">Registrado el {{ cita.diagnostico.fecha_creacion|date:"d/m/Y" }}</small>
+                                </div>
+                            </div>
+                        {% else %}
+                            <form method="POST" class="mb-3">
+                                {% csrf_token %}
+                                <input type="hidden" name="cita_id" value="{{ cita.id }}">
+                                {{ cita.diagnostico_form.as_p }}
+                                <button type="submit" name="submit_diagnostico" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-save me-1"></i>
+                                    Guardar Diagnóstico
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        <!-- Sección de Recetas -->
+                        <h5 class="mt-4"><i class="bi bi-file-earmark-text me-2"></i>Recetas</h5>
+                        {% for receta in cita.recetas.all %}
+                            <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                                <div>
+                                    <a href="{{ receta.archivo.url }}" target="_blank">{{ receta.titulo }}</a>
+                                    <p class="small text-muted mb-0">{{ receta.indicaciones|default:"Sin indicaciones adicionales." }}</p>
+                                </div>
+                                <small class="text-muted">{{ receta.fecha_creacion|date:"d/m/Y" }}</small>
+                            </div>
+                        {% empty %}
+                            <p class="text-muted small">Aún no hay recetas para esta cita.</p>
+                        {% endfor %}
+                        
+                        <!-- Formulario para añadir nueva receta -->
+                        <form method="POST" enctype="multipart/form-data" class="mt-3 border-top pt-3">
+                            {% csrf_token %}
+                            <input type="hidden" name="cita_id" value="{{ cita.id }}">
+                            {{ cita.receta_form.as_p }}
+                            <button type="submit" name="submit_receta" class="btn btn-success btn-sm">
+                                <i class="bi bi-upload me-1"></i>
+                                Añadir Receta
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center p-5">
+            <i class="bi bi-calendar-x fs-1 text-muted"></i>
+            <h4 class="mt-3">Sin historial de citas</h4>
+            <p class="text-muted">Este paciente no tiene citas registradas contigo.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

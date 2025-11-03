@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <!-- NAVBAR para la página de login -->
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'inicio' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife</span>
+            </a>
+            <nav class="nav-actions" aria-label="Acciones">
+                <a href="{% url 'inicio' %}#caracteristicas" class="btn btn-light-outline">Características</a>
+                <a href="{% url 'usuario:login' %}" class="btn btn-light">Iniciar sesión</a>
+                <a href="{% url 'usuario:registro' %}" class="btn btn-primary">Crear Cuenta</a>
+            </nav>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Iniciar Sesión — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="login-card">
+        <div class="row g-0">
+            <!-- Columna de la imagen -->
+            <div class="col-lg-6 d-none d-lg-block">
+                <div class="login-image-container">
+                    <div class="login-image-overlay-text">
+                        <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo mb-3">
+                        <h3 class="text-white fw-bold">Bienvenido de vuelta</h3>
+                        <p class="text-white">Gestiona tu salud de forma fácil y segura.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna del formulario -->
+            <div class="col-lg-6">
+                <div class="login-form-container">
+                    <div class="text-center text-lg-start">
+                        <h2 class="fw-bold mb-2">Iniciar Sesión</h2>
+                        <p class="text-muted mb-4">Ingresa tus credenciales para acceder a tu panel.</p>
+                    </div>
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-danger" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">Ingresar</button>
+                        </div>
+                    </form>
+                    <div class="text-center mt-4">
+                        <p>¿No tienes una cuenta? <a href="{% url 'usuario:registro' %}">Regístrate aquí</a>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

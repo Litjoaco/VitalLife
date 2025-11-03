@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static %}
+{% block header %}
+    <!-- NAVBAR Personalizada para el panel de usuario -->
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'inicio' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife</span>
+            </a>
+            <div class="d-flex align-items-center">
+                {% if user.is_staff %}
+                    <a href="{% url 'paneladmin:admin_dashboard' %}" class="btn btn-danger btn-sm me-2">Admin</a>
+                {% endif %}
+                <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-sm me-2">Cerrar Sesión</a>
+                <div class="dropdown ms-2">
+                    <a href="{% url 'usuario:perfil' %}" class="user-profile-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.nombre }}" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="user-avatar">
+                        {% endif %}
+                        <span class="user-name d-none d-md-inline">{{ user.nombre }}</span>
+                        <i class="bi bi-chevron-down dropdown-arrow"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'usuario:perfil' %}">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Bienvenido a tu Panel — VitalLife{% endblock %}
+
+{% block content %}
+<style>
+    /* Asignamos las imágenes de fondo a cada tarjeta usando IDs únicos */
+    #step-card-1 { background-image: url("{% static 'img/fp1.jpg' %}"); }    
+    #step-card-2 { background-image: url("{% static 'img/fp2.jpg' %}"); }
+    #step-card-3 { background-image: url("{% static 'img/fp3.jpg' %}"); }
+
+    /* Hacemos las tarjetas de pasos más altas */
+    .step-card {
+        height: 550px;
+    }
+
+    /* Estilo para la tarjeta de próxima cita */
+    .next-appointment-card {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        border: none;
+        color: white;
+    }
+    .next-appointment-card .date-box {
+        background-color: rgba(255, 255, 255, 0.15);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        text-align: center;
+    }
+    .next-appointment-card .date-day {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+    .next-appointment-card .date-month {
+        font-size: 1rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+</style>
+
+<div class="container my-5">
+    <div class="text-center mb-5">
+        <h1 class="dashboard-title">Bienvenido de nuevo, {{ user.nombre }}</h1>
+        <p class="lead text-muted">Aquí tienes un resumen de tu actividad en VitalLife.</p>
+    </div>
+
+    <!-- Sección de Próxima Cita o Llamado a la Acción -->
+    <div class="row mb-5 g-4">
+        <div class="col-12">
+            {% if proxima_cita %}
+                <div class="card shadow-lg next-appointment-card">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 col-lg-2">
+                                <div class="date-box">
+                                    <div class="date-day">{{ proxima_cita.fecha_hora|date:"d" }}</div>
+                                    <div class="date-month">{{ proxima_cita.fecha_hora|date:"M" }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-9 col-lg-10 mt-3 mt-md-0">
+                                <h5 class="card-title mb-1">Tu Próxima Cita:</h5>
+                                <p class="mb-2"><strong>{{ proxima_cita.fecha_hora|date:"l, d \d\e F" }}</strong> a las <strong>{{ proxima_cita.fecha_hora|time:"H:i" }} hrs.</strong></p>
+                                <p class="mb-1"><i class="bi bi-person-fill me-2"></i>Dr. {{ proxima_cita.medico.get_full_name }}</p>
+                                <p class="mb-3 small text-white-50"><i class="bi bi-heart-pulse-fill me-2"></i>Especialidad: {{ proxima_cita.especialidad.nombre }}</p>
+                                <a href="{% url 'usuario:detalle_cita' proxima_cita.id %}" class="btn btn-light btn-sm">Ver detalles de la cita</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card shadow-sm bg-light border-0 h-100">
+                    <div class="card-body p-5 text-center d-flex flex-column justify-content-center">
+                        <h4 class="card-title">¡Es hora de cuidar tu salud!</h4>
+                        <p class="text-muted">No tienes citas próximas. Agenda tu consulta siguiendo los pasos a continuación.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pasos para Agendar -->
+    <h3 class="text-center mb-4">Agenda tu consulta en 3 simples pasos</h3>
+    <div class="row g-0 step-card-group">
+        <div class="col-lg-4">
+            <a href="{% url 'usuario:seleccionar_especialidad' %}" class="text-decoration-none">
+                <div id="step-card-1" class="step-card">
+                    <div class="step-card-content">
+                        <div class="step-card-number">1</div>
+                        <h5 class="step-card-title">Elige la Especialidad</h5>
+                        <p class="step-card-text">Selecciona el área médica que necesitas.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-lg-4">
+            <div id="step-card-2" class="step-card">
+                <div class="step-card-content">
+                    <div class="step-card-number">2</div>
+                    <h5 class="step-card-title">Selecciona Fecha y Hora</h5>
+                    <p class="step-card-text">Escoge el día y la hora que más te acomode.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div id="step-card-3" class="step-card">
+                <div class="step-card-content">
+                    <div class="step-card-number">3</div>
+                    <h5 class="step-card-title">Confirma tu Cita</h5>
+                    <p class="step-card-text">Revisa los detalles y confirma tu reserva.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

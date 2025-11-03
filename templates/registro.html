@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <!-- NAVBAR para la página de registro -->
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'inicio' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife</span>
+            </a>
+            <nav class="nav-actions" aria-label="Acciones">
+                <a href="{% url 'inicio' %}#caracteristicas" class="btn btn-light-outline">Características</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'usuario:panel_inicio' %}" class="btn btn-light">Mi Panel</a>
+                    <a href="{% url 'logout' %}" class="btn btn-primary">Cerrar Sesión</a>
+                {% else %}
+                    <a href="{% url 'usuario:login' %}" class="btn btn-light">Iniciar sesión</a>
+                    <a href="{% url 'usuario:registro' %}" class="btn btn-primary">Crear Cuenta</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Crear Cuenta — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="register-container">
+        <h2>Crea tu cuenta en VitalLife</h2>
+        <p class="text-center text-muted mb-4">Completa tus datos para agendar citas y gestionar tu salud.</p>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }}</label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors|striptags }}</div>{% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.apellido.id_for_label }}">{{ form.apellido.label }}</label>
+                        {{ form.apellido }}
+                        {% if form.apellido.errors %}<div class="text-danger small mt-1">{{ form.apellido.errors|striptags }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                {{ form.email }}
+                <div class="form-text">{{ form.email.help_text }}</div>
+                {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>{% endif %}
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.rut.id_for_label }}">{{ form.rut.label }}</label>
+                        {{ form.rut }}
+                        {% if form.rut.errors %}<div class="text-danger small mt-1">{{ form.rut.errors|striptags }}</div>{% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }}</label>
+                        {{ form.telefono }}
+                        {% if form.telefono.errors %}<div class="text-danger small mt-1">{{ form.telefono.errors|striptags }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_password">{{ form.password1.label }}</label>
+                        <div class="input-group">
+                            <input type="password" name="password" class="form-control" required id="id_password">
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="bi bi-eye-slash" id="togglePasswordIcon"></i>
+                            </button>
+                        </div>
+                        <div class="progress mt-2" style="height: 5px;">
+                            <div id="passwordStrengthBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div id="passwordStrengthText" class="form-text mt-1">{{ form.password.help_text }}</div>
+                        {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>{% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+                        <input type="password" name="password2" class="form-control" required id="id_password2">
+                        <div class="form-text">{{ form.password2.help_text }}</div>
+                        {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors|striptags }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row align-items-center mb-3">
+                <div class="col-md-3">
+                     <div class="d-flex justify-content-center">
+                        <img src="{% static 'img/default-avatar.png' %}" id="fotoPreview" class="img-fluid rounded-circle" style="width: 100px; height: 100px; object-fit: cover; border: 3px solid var(--stroke);">
+                     </div>
+                     <p class="text-muted small text-center mt-1 mb-0">Vista previa</p>
+                </div>
+                <div class="col-md-9">
+                    <div class="form-group">
+                        <label for="{{ form.foto_perfil.id_for_label }}">{{ form.foto_perfil.label }}</label>
+                        {{ form.foto_perfil }}
+                        <span id="fileName" class="form-text"></span>
+                        {% if form.foto_perfil.errors %}<div class="text-danger small mt-1">{{ form.foto_perfil.errors|striptags }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="antecedentes-section">
+                <h5><i class="bi bi-file-earmark-medical me-2"></i>Antecedentes Médicos (Opcional)</h5>
+                <p class="text-muted small">Si tienes informes o exámenes previos, puedes subirlos aquí en formato PDF, DOCX o imagen.</p>
+                <div class="form-group">
+                    {{ form.antecedentes_medicos }}
+                    {% if form.antecedentes_medicos.errors %}<div class="text-danger small mt-1">{{ form.antecedentes_medicos.errors|striptags }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">Crear mi cuenta</button>
+            </div>
+        </form>
+        <div class="text-center mt-3">
+            <p>¿Ya tienes una cuenta? <a href="{% url 'usuario:login' %}">Inicia sesión aquí</a>.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Pasamos el texto de ayuda de la contraseña de Django a una variable JS
+    // para que main.js pueda usarlo.
+    document.addEventListener('DOMContentLoaded', function() {
+        const strengthText = document.getElementById('passwordStrengthText');
+        if (strengthText) strengthText.dataset.helpText = "{{ form.password.help_text|escapejs }}";
+    });
+</script>
+{% endblock %}
