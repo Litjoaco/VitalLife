@@ -215,6 +215,7 @@ def admin_gestionar_horarios_view(request, doctor_id=None):
         fecha_hora__range=(start_of_week_dt, end_of_week_dt)
     ).values_list('fecha_hora', flat=True)
 
+    now = timezone.now()
     horario_semanal = []
     for dia in dias_semana:
         slots_dia = []
@@ -223,7 +224,9 @@ def admin_gestionar_horarios_view(request, doctor_id=None):
             slot_info = {
                 'fecha_hora': fecha_hora_slot, 'estado': 'disponible', 'paciente': None
             }
-            if fecha_hora_slot in citas_lookup:
+            if fecha_hora_slot < now:
+                slot_info['estado'] = 'pasado'
+            elif fecha_hora_slot in citas_lookup:
                 slot_info['estado'] = 'reservado'
                 slot_info['paciente'] = citas_lookup[fecha_hora_slot].paciente
             elif fecha_hora_slot in bloqueos_utc:

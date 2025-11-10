@@ -76,6 +76,17 @@
                                                     <span class="slot-text">{{ slot.paciente.get_full_name|truncatechars:15 }}</span>
                                                     <small class="text-muted">Paciente</small>
                                                 </a>
+                                            {% elif slot.estado == 'completada' %}
+                                                <a href="{% url 'usuario:detalle_paciente' slot.paciente.id %}" class="schedule-slot slot-completed" title="Cita completada con {{ slot.paciente.get_full_name }}">
+                                                    <i class="bi bi-check2-circle"></i>
+                                                    <span class="slot-text">{{ slot.paciente.get_full_name|truncatechars:15 }}</span>
+                                                    <small class="text-muted">Completada</small>
+                                                </a>
+                                            {% elif slot.estado == 'pasado' %}
+                                                <div class="schedule-slot slot-past" title="Este horario ya pasó">
+                                                    <i class="bi bi-clock-history"></i>
+                                                    <span class="slot-text">Pasado</span>
+                                                </div>
                                             {% elif slot.estado == 'bloqueado' %}
                                                 <div class="schedule-slot slot-blocked" data-datetime="{{ slot.fecha_hora|date:'c' }}" data-estado="bloqueado">
                                                     <i class="bi bi-lock-fill"></i>
@@ -110,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const fechaHora = this.dataset.datetime;
             let url = '';
 
-            // Determinar la acción y la URL
+            // Determinar la acción y la URL, ignorando slots pasados o reservados
             if (estado === 'disponible') {
                 url = '{% url "usuario:bloquear_horario" %}';
             } else if (estado === 'bloqueado') {

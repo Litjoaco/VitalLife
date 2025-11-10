@@ -199,6 +199,11 @@ def seleccionar_horario_view(request, especialidad_id):
     except (ValueError, TypeError):
         fecha_seleccionada = date.today()
 
+    # --- VERIFICACIÓN: No permitir seleccionar fechas pasadas ---
+    if fecha_seleccionada < date.today():
+        # Si la fecha es pasada, forzamos a que sea hoy.
+        fecha_seleccionada = date.today()
+
     # Filtrar médicos si se seleccionó uno
     medicos_a_consultar = medicos
     if medico_id_str and medico_id_str != 'todos':
@@ -226,6 +231,7 @@ def seleccionar_horario_view(request, especialidad_id):
 
     horas_no_disponibles_utc = {*citas_reservadas.values_list("fecha_hora", flat=True), *bloqueos.values_list("fecha_hora", flat=True)}
 
+    now = timezone.now()
     # Generar horarios
     horarios_disponibles = []
     # --- VERIFICACIÓN: No generar horarios para fines de semana (Sábado=5, Domingo=6) ---
@@ -237,7 +243,8 @@ def seleccionar_horario_view(request, especialidad_id):
                 fecha_hora_slot = timezone.make_aware(
                     datetime.combine(fecha_seleccionada, hora)
                 )
-                if fecha_hora_slot not in horas_no_disponibles_utc:
+                # --- NUEVA VERIFICACIÓN: No mostrar horarios que ya pasaron ---
+                if fecha_hora_slot > now and fecha_hora_slot not in horas_no_disponibles_utc:
                     horarios_disponibles.append({
                         'medico': medico,
                         'fecha_hora': fecha_hora_slot
@@ -278,7 +285,8 @@ def medico_inicio_view(request):
     today = timezone.now().date()
     citas_hoy_count = Cita.objects.filter(
         medico=request.user, 
-        fecha_hora__date=today
+        fecha_hora__date=today,
+        estado__in=[Cita.EstadoCita.RESERVADA, Cita.EstadoCita.COMPLETADA]
     ).count()
     
     context = {
@@ -297,9 +305,9 @@ def medico_dashboard_view(request):
     # Citas para hoy (lista completa, ordenada por hora)
     citas_hoy = Cita.objects.filter(
         medico=request.user, 
-        fecha_hora__date=today
+        fecha_hora__date=today,
+        estado__in=[Cita.EstadoCita.RESERVADA, Cita.EstadoCita.COMPLETADA]
     ).select_related('paciente').order_by('fecha_hora')
-    citas_hoy_count = citas_hoy.count()
 
     # Próxima cita del día (o futura)
     proxima_cita = Cita.objects.filter(
@@ -312,15 +320,16 @@ def medico_dashboard_view(request):
     
     # Citas de la semana (lista completa)
     citas_semana = Cita.objects.filter(
-        medico=request.user, fecha_hora__date__range=[start_of_week, end_of_week]
+        medico=request.user, 
+        fecha_hora__date__range=[start_of_week, end_of_week],
+        estado__in=[Cita.EstadoCita.RESERVADA, Cita.EstadoCita.COMPLETADA]
     ).select_related('paciente').order_by('fecha_hora')
-    citas_semana_count = citas_semana.count()
 
     context = {
-        'citas_hoy_count': citas_hoy_count,
+        'citas_hoy_count': citas_hoy.count(),
         'proxima_cita': proxima_cita,
         'total_pacientes': total_pacientes,
-        'citas_semana_count': citas_semana_count,
+        'citas_semana_count': citas_semana.count(),
         'citas_hoy': citas_hoy,
         'citas_semana': citas_semana,
     }
@@ -355,8 +364,8 @@ def gestionar_horarios_view(request):
     citas_qs = Cita.objects.filter(
         medico=request.user,
         fecha_hora__range=(start_of_week_dt, end_of_week_dt),
-        estado=Cita.EstadoCita.RESERVADA  # Solo mostrar citas reservadas en el calendario
-    ).select_related('paciente')
+        estado__in=[Cita.EstadoCita.RESERVADA, Cita.EstadoCita.COMPLETADA]
+    ).select_related('paciente') # Traemos citas reservadas y completadas
 
     # Creamos un diccionario para buscar citas fácilmente por fecha y hora
     citas_lookup = {cita.fecha_hora: cita for cita in citas_qs}
@@ -367,6 +376,7 @@ def gestionar_horarios_view(request):
     ).values_list('fecha_hora', flat=True)
 
     # Crear una estructura de datos para la plantilla
+    now = timezone.now()
     horario_semanal = []
     for dia in dias_semana:
         slots_dia = []
@@ -383,14 +393,21 @@ def gestionar_horarios_view(request):
                 'cita_id': None,
                 'motivo': None,
             }
+            # --- LÓGICA MEJORADA: Primero buscar si hay una cita en el slot ---
             if fecha_hora_slot in citas_lookup:
                 cita = citas_lookup[fecha_hora_slot]
-                slot_info['estado'] = 'reservado'
                 slot_info['paciente'] = cita.paciente
                 slot_info['cita_id'] = cita.id
                 slot_info['motivo'] = cita.motivo
+                # Si la cita ya pasó, la marcamos como 'completada' visualmente
+                if fecha_hora_slot < now:
+                    slot_info['estado'] = 'completada'
+                else:
+                    slot_info['estado'] = 'reservado'
             elif fecha_hora_slot in bloqueos_utc:
                 slot_info['estado'] = 'bloqueado'
+            elif fecha_hora_slot < now:
+                slot_info['estado'] = 'pasado' # Solo si estaba libre y ya pasó
             
             slots_dia.append(slot_info)
         horario_semanal.append({'dia': dia, 'slots': slots_dia})
@@ -506,6 +523,13 @@ def detalle_paciente_view(request, paciente_id):
             # Ahora sí, buscamos la cita porque es necesaria para diagnóstico o receta.
             cita = get_object_or_404(Cita, id=cita_id, medico=request.user, paciente=paciente)
 
+            # --- NUEVA VERIFICACIÓN DE SEGURIDAD ---
+            # Solo permitir editar citas que no han pasado o que ocurrieron hace menos de 24 horas.
+            if cita.fecha_hora < timezone.now() - timedelta(days=1):
+                messages.error(request, "No se puede modificar una cita tan antigua.")
+                return redirect('usuario:detalle_paciente', paciente_id=paciente.id)
+
+
             if 'submit_diagnostico' in request.POST:
                 diagnostico_form = DiagnosticoForm(request.POST, prefix=f'diag-{cita.id}')
                 if diagnostico_form.is_valid():
@@ -535,6 +559,9 @@ def detalle_paciente_view(request, paciente_id):
         if not hasattr(cita, 'diagnostico'):
             cita.diagnostico_form = DiagnosticoForm(prefix=f'diag-{cita.id}')
         cita.receta_form = RecetaForm(prefix=f'receta-{cita.id}')
+        # --- LÓGICA PARA LA PLANTILLA ---
+        # Añadimos un atributo para saber si la cita tiene más de 24h de antigüedad
+        cita.es_antigua = cita.fecha_hora < timezone.now() - timedelta(days=1)
 
     # Obtener la ficha médica o crear una instancia de formulario vacía si no existe.
     ficha_medica = FichaMedica.objects.filter(paciente=paciente).first()
@@ -544,5 +571,6 @@ def detalle_paciente_view(request, paciente_id):
         'paciente': paciente,
         'citas': citas,
         'ficha_form': ficha_form,
+        'now': timezone.now(), # Pasamos la fecha actual a la plantilla
     }
     return render(request, 'detalle_paciente.html', context)

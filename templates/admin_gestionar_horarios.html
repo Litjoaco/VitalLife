@@ -49,6 +49,11 @@
                                             <span class="slot-text">{{ slot.paciente.get_full_name|truncatechars:15 }}</span>
                                             <small class="text-muted">Paciente</small>
                                         </div>
+                                    {% elif slot.estado == 'pasado' %}
+                                        <div class="schedule-slot slot-past" title="Este horario ya pasó">
+                                            <i class="bi bi-clock-history"></i>
+                                            <span class="slot-text">Pasado</span>
+                                        </div>
                                     {% elif slot.estado == 'bloqueado' %}
                                         <div class="schedule-slot slot-blocked" data-datetime="{{ slot.fecha_hora|date:'c' }}" data-estado="bloqueado">
                                             <i class="bi bi-lock-fill"></i>
@@ -79,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
     slots.forEach(slot => {
         slot.addEventListener('click', function() {
             const estado = this.dataset.estado;
-            if (estado === 'reservado') return;
+            if (estado === 'reservado' || estado === 'pasado') return;
 
             const fechaHora = this.dataset.datetime;
             let url = '';

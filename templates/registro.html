@@ -68,19 +68,25 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }}</label>
-                        {{ form.telefono }}
-                        {% if form.telefono.errors %}<div class="text-danger small mt-1">{{ form.telefono.errors|striptags }}</div>{% endif %}
+                        <label for="{{ form.fecha_nacimiento.id_for_label }}">{{ form.fecha_nacimiento.label }}</label>
+                        <input type="date" name="fecha_nacimiento" class="form-control" required id="id_fecha_nacimiento">
+                        {% if form.fecha_nacimiento.errors %}<div class="text-danger small mt-1">{{ form.fecha_nacimiento.errors|striptags }}</div>{% endif %}
                     </div>
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }} (Opcional)</label>
+                {{ form.telefono }}
+                {% if form.telefono.errors %}<div class="text-danger small mt-1">{{ form.telefono.errors|striptags }}</div>{% endif %}
             </div>
 
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="id_password">{{ form.password1.label }}</label>
+                        <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
                         <div class="input-group">
-                            <input type="password" name="password" class="form-control" required id="id_password">
+                            {{ form.password1 }}
                             <button class="btn btn-outline-secondary" type="button" id="togglePassword">
                                 <i class="bi bi-eye-slash" id="togglePasswordIcon"></i>
                             </button>
@@ -88,14 +94,14 @@
                         <div class="progress mt-2" style="height: 5px;">
                             <div id="passwordStrengthBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
-                        <div id="passwordStrengthText" class="form-text mt-1">{{ form.password.help_text }}</div>
-                        {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>{% endif %}
+                        <div id="passwordStrengthText" class="form-text mt-1">{{ form.password1.help_text }}</div>
+                        {% if form.password1.errors %}<div class="text-danger small mt-1">{{ form.password1.errors|striptags }}</div>{% endif %}
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
-                        <input type="password" name="password2" class="form-control" required id="id_password2">
+                        {{ form.password2 }}
                         <div class="form-text">{{ form.password2.help_text }}</div>
                         {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors|striptags }}</div>{% endif %}
                     </div>
@@ -107,13 +113,13 @@
             <div class="row align-items-center mb-3">
                 <div class="col-md-3">
                      <div class="d-flex justify-content-center">
-                        <img src="{% static 'img/default-avatar.png' %}" id="fotoPreview" class="img-fluid rounded-circle" style="width: 100px; height: 100px; object-fit: cover; border: 3px solid var(--stroke);">
+                        <img src="{% static 'img/default-avatar.png' %}" id="imagePreview" class="img-fluid rounded-circle" style="width: 100px; height: 100px; object-fit: cover; border: 3px solid var(--stroke);">
                      </div>
                      <p class="text-muted small text-center mt-1 mb-0">Vista previa</p>
                 </div>
                 <div class="col-md-9">
                     <div class="form-group">
-                        <label for="{{ form.foto_perfil.id_for_label }}">{{ form.foto_perfil.label }}</label>
+                        <label for="{{ form.foto_perfil.id_for_label }}">{{ form.foto_perfil.label }} (Opcional)</label>
                         {{ form.foto_perfil }}
                         <span id="fileName" class="form-text"></span>
                         {% if form.foto_perfil.errors %}<div class="text-danger small mt-1">{{ form.foto_perfil.errors|striptags }}</div>{% endif %}
@@ -149,7 +155,7 @@
     // para que main.js pueda usarlo.
     document.addEventListener('DOMContentLoaded', function() {
         const strengthText = document.getElementById('passwordStrengthText');
-        if (strengthText) strengthText.dataset.helpText = "{{ form.password.help_text|escapejs }}";
+        if (strengthText) strengthText.dataset.helpText = "{{ form.password1.help_text|escapejs }}";
     });
 </script>
 {% endblock %}
