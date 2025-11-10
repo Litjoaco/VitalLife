@@ -69,7 +69,7 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="{{ form.fecha_nacimiento.id_for_label }}">{{ form.fecha_nacimiento.label }}</label>
-                        <input type="date" name="fecha_nacimiento" class="form-control" required id="id_fecha_nacimiento">
+                        {{ form.fecha_nacimiento }}
                         {% if form.fecha_nacimiento.errors %}<div class="text-danger small mt-1">{{ form.fecha_nacimiento.errors|striptags }}</div>{% endif %}
                     </div>
                 </div>
@@ -113,7 +113,7 @@
             <div class="row align-items-center mb-3">
                 <div class="col-md-3">
                      <div class="d-flex justify-content-center">
-                        <img src="{% static 'img/default-avatar.png' %}" id="imagePreview" class="img-fluid rounded-circle" style="width: 100px; height: 100px; object-fit: cover; border: 3px solid var(--stroke);">
+                        <img src="{% static 'img/default-avatar.png' %}" id="fotoPreview" class="img-fluid rounded-circle" style="width: 100px; height: 100px; object-fit: cover; border: 3px solid var(--stroke);">
                      </div>
                      <p class="text-muted small text-center mt-1 mb-0">Vista previa</p>
                 </div>

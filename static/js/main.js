@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Script para el año del footer
     const yearSpan = document.getElementById('year');
     if (yearSpan) {
@@ -7,13 +7,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Script para mostrar/ocultar contraseña
     const togglePassword = document.querySelector('#togglePassword');
-    const passwordInput = document.querySelector('#id_password');
+    const passwordInput = document.querySelector('#id_password1');
     const passwordIcon = document.querySelector('#togglePasswordIcon');
 
     if (togglePassword && passwordInput && passwordIcon) {
         togglePassword.addEventListener('click', function () {
             const currentType = passwordInput.getAttribute('type');
-            const newType = currentType === 'password' ? 'text' : 'password';
+            const newType = currentType === 'password' ? 'text' : 'password'; // Corregido para usar id_password1
             passwordInput.setAttribute('type', newType);
             
             if (newType === 'password') {
@@ -27,12 +27,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Script para la barra de fortaleza de la contraseña
-    const passwordInputForStrength = document.querySelector('#id_password');
+    const passwordInputForStrength = document.querySelector('#id_password1');
     const strengthBar = document.getElementById('passwordStrengthBar');
     const strengthText = document.getElementById('passwordStrengthText');
 
     if (passwordInputForStrength && strengthBar && strengthText) {
-        passwordInputForStrength.addEventListener('input', function() {
+        passwordInputForStrength.addEventListener('input', function () {
             const password = this.value;
             let score = 0;
 
@@ -50,8 +50,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (password.length === 0) {
                 // Si el campo está vacío, restaurar el texto de ayuda original de Django
-                strengthText.textContent = '{{ form.password.help_text|escapejs }}'; // Usamos una variable de la plantilla
-                strengthText.className = 'form-text mt-1';
+                strengthText.textContent = strengthText.dataset.helpText || ''; // Usar el data-attribute
+                strengthText.className = 'form-text mt-1'; // Restaurar clase original
             } else if (score <= 2) {
                 strengthBar.classList.add('bg-danger');
                 strengthText.textContent = 'Fortaleza: Débil';
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const rutInput = document.querySelector('#id_rut');
 
     if (rutInput) {
-        rutInput.addEventListener('input', function(e) {
+        rutInput.addEventListener('input', function (e) {
             let rut = e.target.value.replace(/[^\dkK]/g, ''); // Solo números y K
             
             if (rut.length > 1) {
@@ -99,12 +99,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileNameSpan = document.getElementById('fileName');
 
     if (fotoInput && fotoPreview && fileNameSpan) {
-        fotoInput.addEventListener('change', function() {
+        fotoInput.addEventListener('change', function () {
             const file = this.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    fotoPreview.setAttribute('src', e.target.result);
+                reader.onload = function (e) {
+                    fotoPreview.src = e.target.result;
                     fotoPreview.style.display = 'block';
                 }
                 reader.readAsDataURL(file);

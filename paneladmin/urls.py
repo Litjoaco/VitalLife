@@ -21,4 +21,6 @@ urlpatterns = [
     path('horarios/<int:doctor_id>/', views.admin_gestionar_horarios_view, name='admin_gestionar_horarios_medico'),
     path('horarios/bloquear/', views.admin_bloquear_horario_view, name='admin_bloquear_horario'),
     path('horarios/desbloquear/', views.admin_desbloquear_horario_view, name='admin_desbloquear_horario'),
+    # --- URL para Reportes ---
+    path('reportes/', views.reportes_administrativos_view, name='reportes_administrativos'),
 ]

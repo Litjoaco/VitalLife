@@ -14,6 +14,13 @@ class RegistroUsuarioForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Añadir la clase 'form-control' a todos los campos para que Bootstrap los estilice
+        self.fields['password1'].widget.attrs.update({
+            'class': 'form-control', 'id': 'id_password1'
+        })
+        self.fields['password2'].widget.attrs.update({'class': 'form-control'})
+        self.fields['fecha_nacimiento'].widget = forms.DateInput(
+            attrs={'class': 'form-control', 'type': 'date'}
+        )
         for field_name, field in self.fields.items():
             if not isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs.update({'class': 'form-control'})

@@ -6,6 +6,7 @@ from django.db.models import Prefetch
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse, Http404
 from django.utils import timezone
+from django.db.models import Count, Q
 from .forms import RegistroUsuarioForm, LoginForm, DiagnosticoForm, RecetaForm, PerfilUsuarioForm, FichaMedicaForm
 from paneladmin.models import Especialidad, Cita, HorarioBloqueado, FichaMedica
 from .models import Usuario

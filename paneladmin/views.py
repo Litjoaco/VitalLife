@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.http import JsonResponse
+from django.db.models import Count, Q
 from usuario.models import Usuario
 from django.db.models import Q
 from .models import Especialidad, Cita, HorarioBloqueado
@@ -265,3 +266,53 @@ def admin_desbloquear_horario_view(request):
         HorarioBloqueado.objects.filter(medico=doctor, fecha_hora=fecha_hora).delete()
         return JsonResponse({'status': 'ok', 'accion': 'desbloqueado'})
     return JsonResponse({'status': 'error'}, status=400)
+
+@login_required
+@user_passes_test(es_staff, login_url='usuario:login')
+def reportes_administrativos_view(request):
+    """
+    Vista para mostrar reportes y estadísticas al personal administrativo.
+    """
+    # 1. Número de consultas por especialidad (citas completadas o reservadas)
+    consultas_por_especialidad = Especialidad.objects.annotate(
+        num_citas=Count('cita', filter=Q(cita__estado__in=[Cita.EstadoCita.RESERVADA, Cita.EstadoCita.COMPLETADA]))
+    ).order_by('-num_citas')
+
+    # 2. Porcentaje de ocupación
+    # Definimos el rango de fechas para el cálculo (ej. últimos 30 días)
+    hoy = timezone.now().date()
+    fecha_inicio = hoy - timedelta(days=30)
+    
+    medicos = Usuario.objects.filter(role='MEDICO')
+    total_slots_posibles = 0
+    
+    # Horas de trabajo estándar (10:00 a 16:00 -> 7 slots por día)
+    horas_laborales_count = 7 
+    
+    # Calcular el total de slots disponibles en los últimos 30 días
+    dias_habiles = 0
+    for i in range(31):
+        dia = fecha_inicio + timedelta(days=i)
+        if dia.weekday() < 5: # Lunes a Viernes
+            dias_habiles += 1
+    
+    total_slots_posibles = medicos.count() * dias_habiles * horas_laborales_count if medicos.exists() else 0
+
+    # Citas ocupadas en el mismo período
+    citas_ocupadas = Cita.objects.filter(
+        fecha_hora__range=(fecha_inicio, hoy + timedelta(days=1)),
+        estado__in=[Cita.EstadoCita.RESERVADA, Cita.EstadoCita.COMPLETADA]
+    ).count()
+
+    # Calculamos el porcentaje. La plantilla se encargará del formato.
+    porcentaje_float = (citas_ocupadas / total_slots_posibles * 100) if total_slots_posibles > 0 else 0
+
+    context = {
+        'consultas_por_especialidad': consultas_por_especialidad,
+        'porcentaje_ocupacion': porcentaje_float,
+        'citas_ocupadas': citas_ocupadas,
+        'total_slots_posibles': total_slots_posibles,
+        'fecha_inicio': fecha_inicio,
+        'hoy': hoy,
+    }
+    return render(request, 'reportes_administrativos.html', context)

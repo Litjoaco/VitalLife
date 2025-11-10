@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load static %}
+{% load usuario_extras %}
+
+{% block header %}
+    <header class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Barra de navegación del panel de admin">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'inicio' %}">
+                <img src="{% static 'img/logov.png' %}" alt="VitalLife Logo" class="logo">
+                <span>VitalLife Admin</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <a href="{% url 'paneladmin:admin_dashboard' %}" class="btn btn-light me-2"><i class="bi bi-arrow-left me-1"></i> Volver al Panel</a>
+                <div class="dropdown ms-2">
+                    <a href="#" class="user-profile-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.nombre }}" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'img/default-avatar.png' %}" alt="Avatar por defecto" class="user-avatar">
+                        {% endif %}
+                        <span class="user-name d-none d-md-inline">{{ user.nombre }}</span>
+                        <i class="bi bi-chevron-down dropdown-arrow"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'usuario:perfil' %}">Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block title %}Reportes Administrativos — VitalLife{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="dashboard-title mb-0">Reportes Administrativos</h1>
+        <span class="text-muted">Datos de los últimos 30 días</span>
+    </div>
+
+    <div class="row g-4">
+        <!-- Porcentaje de Ocupación -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-pie-chart-fill me-2 text-primary"></i>Porcentaje de Ocupación</h5>
+                    <p class="card-text text-muted">
+                        Basado en los horarios laborales de los médicos en los últimos 30 días ({{ fecha_inicio|date:"d/m/Y" }} - {{ hoy|date:"d/m/Y" }}).
+                    </p>
+                    <div class="display-4 fw-bold text-center my-4">{{ porcentaje_ocupacion|floatformat:2 }}%</div>
+                    <div class="progress" style="height: 20px;">
+                        <div 
+                            class="progress-bar 
+                                {% if porcentaje_ocupacion > 75 %}bg-success
+                                {% elif porcentaje_ocupacion > 40 %}bg-warning
+                                {% else %}bg-danger
+                                {% endif %}" 
+                            role="progressbar" 
+                            aria-valuenow="{{ porcentaje_ocupacion|to_css_float }}" 
+                            aria-valuemin="0" 
+                            aria-valuemax="100"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2 text-muted small">
+                        <span>{{ citas_ocupadas }} citas ocupadas</span>
+                        <span>{{ total_slots_posibles }} slots totales</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consultas por Especialidad -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-bar-chart-line-fill me-2 text-primary"></i>Consultas por Especialidad</h5>
+                    <p class="card-text text-muted">
+                        Total de citas (reservadas y completadas) para cada área.
+                    </p>
+                    {% if consultas_por_especialidad %}
+                        <ul class="list-group list-group-flush">
+                            {% for item in consultas_por_especialidad %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ item.nombre }}
+                                    <span class="badge bg-primary rounded-pill">{{ item.num_citas }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-center text-muted mt-4">No hay datos de citas para mostrar.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
