@@ -3,9 +3,12 @@ from django import template
 register = template.Library()
 
 @register.filter
-def to_css_float(value):
+def get_item(dictionary, key):
     """
-    Convierte un número a un string y reemplaza la coma decimal por un punto
-    para que sea compatible con CSS.
+    Custom filter to retrieve an item from a dictionary or list by its key/index.
+    Usage: {{ my_dict|get_item:key }} or {{ my_list|get_item:index }}
     """
-    return str(value).replace(',', '.')
+    try:
+        return dictionary[key]
+    except (KeyError, IndexError):
+        return None
